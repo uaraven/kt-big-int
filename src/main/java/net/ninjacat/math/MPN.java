@@ -48,6 +48,7 @@ package net.ninjacat.math;
  * (at least on platforms that use 32-bit "limbs").
  */
 
+@SuppressWarnings("MagicNumber")
 public class MPN {
   /**
    * Add x[0:size-1] and y, and write the size least
@@ -56,7 +57,7 @@ public class MPN {
    * All values are unsigned.
    * This is basically the same as gmp's mpn_add_1.
    */
-  public static int add_1(int[] dest, int[] x, int size, int y) {
+  public static int add_1(final int[] dest, final int[] x, final int size, final int y) {
     long carry = (long) y & 0xffffffffL;
     for (int i = 0; i < size; i++) {
       carry += ((long) x[i] & 0xffffffffL);
@@ -74,7 +75,7 @@ public class MPN {
    * @return the carry, either 0 or 1
    * This function is basically the same as gmp's mpn_add_n.
    */
-  public static int add_n(int dest[], int[] x, int[] y, int len) {
+  public static int add_n(final int[] dest, final int[] x, final int[] y, final int len) {
     long carry = 0;
     for (int i = 0; i < len; i++) {
       carry += ((long) x[i] & 0xffffffffL)
@@ -92,11 +93,11 @@ public class MPN {
    * This is basically the same as gmp's mpn_sub_n function.
    */
 
-  public static int sub_n(int[] dest, int[] X, int[] Y, int size) {
+  public static int sub_n(final int[] dest, final int[] X, final int[] Y, final int size) {
     int cy = 0;
     for (int i = 0; i < size; i++) {
       int y = Y[i];
-      int x = X[i];
+      final int x = X[i];
       y += cy;        /* add previous carry to subtrahend */
       // Invert the high-order bit, because: (unsigned) X > (unsigned) Y
       // iff: (int) (X^0x80000000) > (int) (Y^0x80000000).
@@ -118,8 +119,8 @@ public class MPN {
    * This function is basically the same as gmp's mpn_mul_1.
    */
 
-  public static int mul_1(int[] dest, int[] x, int len, int y) {
-    long yword = (long) y & 0xffffffffL;
+  public static int mul_1(final int[] dest, final int[] x, final int len, final int y) {
+    final long yword = (long) y & 0xffffffffL;
     long carry = 0;
     for (int j = 0; j < len; j++) {
       carry += ((long) x[j] & 0xffffffffL) * yword;
@@ -140,13 +141,13 @@ public class MPN {
    * This function is basically the same gmp's mpn_mul.
    */
 
-  public static void mul(int[] dest,
-                         int[] x, int xlen,
-                         int[] y, int ylen) {
+  public static void mul(final int[] dest,
+                         final int[] x, final int xlen,
+                         final int[] y, final int ylen) {
     dest[xlen] = MPN.mul_1(dest, x, xlen, y[0]);
 
     for (int i = 1; i < ylen; i++) {
-      long yword = (long) y[i] & 0xffffffffL;
+      final long yword = (long) y[i] & 0xffffffffL;
       long carry = 0;
       for (int j = 0; j < xlen; j++) {
         carry += ((long) x[j] & 0xffffffffL) * yword
@@ -163,10 +164,10 @@ public class MPN {
    * Assumes (unsigned int)(N>>32) < (unsigned int)D.
    * Code transcribed from gmp-2.0's mpn_udiv_w_sdiv function.
    */
-  public static long udiv_qrnnd(long N, int D) {
+  public static long udiv_qrnnd(final long N, final int D) {
     long q, r;
-    long a1 = N >>> 32;
-    long a0 = N & 0xffffffffL;
+    final long a1 = N >>> 32;
+    final long a0 = N & 0xffffffffL;
     if (D >= 0) {
       if (a1 < ((D - a1 - (a0 >>> 31)) & 0xffffffffL)) {
         /* dividend, divisor, and quotient are nonnegative */
@@ -174,7 +175,7 @@ public class MPN {
         r = N % D;
       } else {
         /* Compute c1*2^32 + c0 = a1*2^32 + a0 - 2^31*d */
-        long c = N - ((long) D << 31);
+        final long c = N - ((long) D << 31);
         /* Divide (c1*2^32 + c0) by d */
         q = c / D;
         r = c % D;
@@ -182,7 +183,7 @@ public class MPN {
         q += 1 << 31;
       }
     } else {
-      long b1 = D >>> 1;      /* d/2, between 2^30 and 2^31 - 1 */
+      final long b1 = D >>> 1;      /* d/2, between 2^30 and 2^31 - 1 */
       //long c1 = (a1 >> 1); /* A/2 */
       //int c0 = (a1 << 31) + (a0 >> 1);
       long c = N >>> 1;
@@ -230,19 +231,19 @@ public class MPN {
    * OK for quotient==dividend.
    */
 
-  public static int divmod_1(int[] quotient, int[] dividend,
-                             int len, int divisor) {
+  public static int divmod_1(final int[] quotient, final int[] dividend,
+                             final int len, final int divisor) {
     int i = len - 1;
     long r = dividend[i];
-    if ((r & 0xffffffffL) >= ((long) divisor & 0xffffffffL))
+    if ((r & 0xffffffffL) >= ((long) divisor & 0xffffffffL)) {
       r = 0;
-    else {
+    } else {
       quotient[i--] = 0;
       r <<= 32;
     }
 
     for (; i >= 0; i--) {
-      int n0 = dividend[i];
+      final int n0 = dividend[i];
       r = (r & ~0xffffffffL) | (n0 & 0xffffffffL);
       r = udiv_qrnnd(r, divisor);
       quotient[i] = (int) r;
@@ -255,23 +256,24 @@ public class MPN {
    * @return the most significant word of
    * the product, minus borrow-out from the subtraction.
    */
-  public static int submul_1(int[] dest, int offset, int[] x, int len, int y) {
-    long yl = (long) y & 0xffffffffL;
+  public static int submul_1(final int[] dest, final int offset, final int[] x, final int len, final int y) {
+    final long yl = (long) y & 0xffffffffL;
     int carry = 0;
     int j = 0;
     do {
-      long prod = ((long) x[j] & 0xffffffffL) * yl;
+      final long prod = ((long) x[j] & 0xffffffffL) * yl;
       int prod_low = (int) prod;
-      int prod_high = (int) (prod >> 32);
+      final int prod_high = (int) (prod >> 32);
       prod_low += carry;
       // Invert the high-order bit, because: (unsigned) X > (unsigned) Y
       // iff: (int) (X^0x80000000) > (int) (Y^0x80000000).
       carry = ((prod_low ^ 0x80000000) < (carry ^ 0x80000000) ? 1 : 0)
               + prod_high;
-      int x_j = dest[offset + j];
+      final int x_j = dest[offset + j];
       prod_low = x_j - prod_low;
-      if ((prod_low ^ 0x80000000) > (x_j ^ 0x80000000))
+      if ((prod_low ^ 0x80000000) > (x_j ^ 0x80000000)) {
         carry++;
+      }
       dest[offset + j] = prod_low;
     }
     while (++j < len);
@@ -286,7 +288,7 @@ public class MPN {
    * (int)y[ny-1] < 0  (i.e. most significant bit set)
    */
 
-  public static void divide(int[] zds, int nx, int[] y, int ny) {
+  public static void divide(final int[] zds, final int nx, final int[] y, final int ny) {
     // This is basically Knuth's formulation of the classical algorithm,
     // but translated from in scm_divbigbig in Jaffar's SCM implementation.
 
@@ -305,15 +307,15 @@ public class MPN {
       // Knuth's j == our nx-j.
       // Knuth's u[j:j+n] == our zds[j:j-ny].
       int qhat;  // treated as unsigned
-      if (zds[j] == y[ny - 1])
+      if (zds[j] == y[ny - 1]) {
         qhat = -1;  // 0xffffffff
-      else {
-        long w = (((long) (zds[j])) << 32) + ((long) zds[j - 1] & 0xffffffffL);
+      } else {
+        final long w = (((long) (zds[j])) << 32) + ((long) zds[j - 1] & 0xffffffffL);
         qhat = (int) udiv_qrnnd(w, y[ny - 1]);
       }
       if (qhat != 0) {
-        int borrow = submul_1(zds, j - ny, y, ny, qhat);
-        int save = zds[j];
+        final int borrow = submul_1(zds, j - ny, y, ny, qhat);
+        final int save = zds[j];
         long num = ((long) save & 0xffffffffL) - ((long) borrow & 0xffffffffL);
         while (num != 0) {
           qhat--;
@@ -341,52 +343,58 @@ public class MPN {
    * @param radix the base
    * @return number of digits
    */
-  public static int chars_per_word(int radix) {
+  public static int chars_per_word(final int radix) {
     if (radix < 10) {
       if (radix < 8) {
-        if (radix <= 2)
+        if (radix <= 2) {
           return 32;
-        else if (radix == 3)
+        } else if (radix == 3) {
           return 20;
-        else if (radix == 4)
+        } else if (radix == 4) {
           return 16;
-        else
+        } else {
           return 18 - radix;
-      } else
+        }
+      } else {
         return 10;
-    } else if (radix < 12)
+      }
+    } else if (radix < 12) {
       return 9;
-    else if (radix <= 16)
+    } else if (radix <= 16) {
       return 8;
-    else if (radix <= 23)
+    } else if (radix <= 23) {
       return 7;
-    else if (radix <= 40)
+    } else if (radix <= 40) {
       return 6;
-      // The following are conservative, but we don't care.
-    else if (radix <= 256)
+    }
+    // The following are conservative, but we don't care.
+    else if (radix <= 256) {
       return 4;
-    else
+    } else {
       return 1;
+    }
   }
 
   /**
    * Count the number of leading zero bits in an int.
    */
   public static int count_leading_zeros(int i) {
-    if (i == 0)
+    if (i == 0) {
       return 32;
+    }
     int count = 0;
     for (int k = 16; k > 0; k = k >> 1) {
-      int j = i >>> k;
-      if (j == 0)
+      final int j = i >>> k;
+      if (j == 0) {
         count += k;
-      else
+      } else {
         i = j;
+      }
     }
     return count;
   }
 
-  public static int set_str(int dest[], byte[] str, int str_len, int base) {
+  public static int set_str(final int[] dest, final byte[] str, final int str_len, final int base) {
     int size = 0;
     if ((base & (base - 1)) == 0) {
       // The base is a power of 2.  Read the input string from
@@ -394,11 +402,13 @@ public class MPN {
 
       int next_bitpos = 0;
       int bits_per_indigit = 0;
-      for (int i = base; (i >>= 1) != 0; ) bits_per_indigit++;
+      for (int i = base; (i >>= 1) != 0; ) {
+        bits_per_indigit++;
+      }
       int res_digit = 0;
 
       for (int i = str_len; --i >= 0; ) {
-        int inp_digit = str[i];
+        final int inp_digit = str[i];
         res_digit |= inp_digit << next_bitpos;
         next_bitpos += bits_per_indigit;
         if (next_bitpos >= 32) {
@@ -408,17 +418,19 @@ public class MPN {
         }
       }
 
-      if (res_digit != 0)
+      if (res_digit != 0) {
         dest[size++] = res_digit;
+      }
     } else {
       // General case.  The base is not a power of 2.
-      int indigits_per_limb = MPN.chars_per_word(base);
+      final int indigits_per_limb = MPN.chars_per_word(base);
       int str_pos = 0;
 
       while (str_pos < str_len) {
         int chunk = str_len - str_pos;
-        if (chunk > indigits_per_limb)
+        if (chunk > indigits_per_limb) {
           chunk = indigits_per_limb;
+        }
         int res_digit = str[str_pos++];
         int big_base = base;
 
@@ -428,14 +440,15 @@ public class MPN {
         }
 
         int cy_limb;
-        if (size == 0)
+        if (size == 0) {
           cy_limb = res_digit;
-        else {
+        } else {
           cy_limb = MPN.mul_1(dest, dest, size, big_base);
           cy_limb += MPN.add_1(dest, dest, size, res_digit);
         }
-        if (cy_limb != 0)
+        if (cy_limb != 0) {
           dest[size++] = cy_limb;
+        }
       }
     }
     return size;
@@ -447,10 +460,10 @@ public class MPN {
    * @result -1, 0, or 1 depending on if x&lt;y, x==y, or x&gt;y.
    * This is basically the same as gmp's mpn_cmp function.
    */
-  public static int cmp(int[] x, int[] y, int size) {
+  public static int cmp(final int[] x, final int[] y, int size) {
     while (--size >= 0) {
-      int x_word = x[size];
-      int y_word = y[size];
+      final int x_word = x[size];
+      final int y_word = y[size];
       if (x_word != y_word) {
         // Invert the high-order bit, because:
         // (unsigned) X > (unsigned) Y iff
@@ -466,7 +479,7 @@ public class MPN {
    *
    * @return -1, 0, or 1 depending on if x&lt;y, x==y, or x&gt;y.
    */
-  public static int cmp(int[] x, int xlen, int[] y, int ylen) {
+  public static int cmp(final int[] x, final int xlen, final int[] y, final int ylen) {
     return xlen > ylen ? 1 : xlen < ylen ? -1 : cmp(x, y, xlen);
   }
 
@@ -478,14 +491,14 @@ public class MPN {
    * OK if dest==x.
    * Assumes: 0 &lt; count &lt; 32
    */
-  public static int rshift(int[] dest, int[] x, int x_start,
-                           int len, int count) {
-    int count_2 = 32 - count;
+  public static int rshift(final int[] dest, final int[] x, final int x_start,
+                           final int len, final int count) {
+    final int count_2 = 32 - count;
     int low_word = x[x_start];
-    int retval = low_word << count_2;
+    final int retval = low_word << count_2;
     int i = 1;
     for (; i < len; i++) {
-      int high_word = x[x_start + i];
+      final int high_word = x[x_start + i];
       dest[i - 1] = (low_word >>> count) | (high_word << count_2);
       low_word = high_word;
     }
@@ -501,13 +514,15 @@ public class MPN {
    * Assumes: 0 &lt;= count &lt; 32
    * Same as rshift, but handles count==0 (and has no return value).
    */
-  public static void rshift0(int[] dest, int[] x, int x_start,
-                             int len, int count) {
-    if (count > 0)
+  public static void rshift0(final int[] dest, final int[] x, final int x_start,
+                             final int len, final int count) {
+    if (count > 0) {
       rshift(dest, x, x_start, len, count);
-    else
-      for (int i = 0; i < len; i++)
+    } else {
+      for (int i = 0; i < len; i++) {
         dest[i] = x[i + x_start];
+      }
+    }
   }
 
   /**
@@ -518,16 +533,16 @@ public class MPN {
    * @param count the shift count
    * @return (long)(x[0..len - 1] & gt ; & gt ; count).
    */
-  public static long rshift_long(int[] x, int len, int count) {
+  public static long rshift_long(final int[] x, final int len, int count) {
     int wordno = count >> 5;
     count &= 31;
-    int sign = x[len - 1] < 0 ? -1 : 0;
+    final int sign = x[len - 1] < 0 ? -1 : 0;
     int w0 = wordno >= len ? sign : x[wordno];
     wordno++;
     int w1 = wordno >= len ? sign : x[wordno];
     if (count != 0) {
       wordno++;
-      int w2 = wordno >= len ? sign : x[wordno];
+      final int w2 = wordno >= len ? sign : x[wordno];
       w0 = (w0 >>> count) | (w1 << (32 - count));
       w1 = (w1 >>> count) | (w2 << (32 - count));
     }
@@ -541,15 +556,15 @@ public class MPN {
    * OK if dest==x.
    */
 
-  public static int lshift(int[] dest, int d_offset,
-                           int[] x, int len, int count) {
-    int count_2 = 32 - count;
+  public static int lshift(final int[] dest, int d_offset,
+                           final int[] x, final int len, final int count) {
+    final int count_2 = 32 - count;
     int i = len - 1;
     int high_word = x[i];
-    int retval = high_word >>> count_2;
+    final int retval = high_word >>> count_2;
     d_offset++;
     while (--i >= 0) {
-      int low_word = x[i];
+      final int low_word = x[i];
       dest[d_offset + i] = (high_word << count) | (low_word >>> count_2);
       high_word = low_word;
     }
@@ -571,8 +586,9 @@ public class MPN {
       word >>= 2;
       i += 2;
     }
-    if ((word & 1) == 0)
+    if ((word & 1) == 0) {
       i += 1;
+    }
     return i;
   }
 
@@ -580,10 +596,11 @@ public class MPN {
    * Return least i such that words &amp; (1&lt;&lt;i). Assumes there is such an i.
    */
 
-  public static int findLowestBit(int[] words) {
+  public static int findLowestBit(final int[] words) {
     for (int i = 0; ; i++) {
-      if (words[i] != 0)
+      if (words[i] != 0) {
         return 32 * i + findLowestBit(words[i]);
+      }
     }
   }
 
@@ -594,7 +611,7 @@ public class MPN {
    * Also destroys y (actually sets it to a copy of the result).
    */
 
-  public static int gcd(int[] x, int[] y, int len) {
+  public static int gcd(final int[] x, final int[] y, int len) {
     int i, word;
     // Find sh such that both x and y are divisible by 2**sh.
     for (i = 0; ; i++) {
@@ -604,8 +621,8 @@ public class MPN {
         break;
       }
     }
-    int initShiftWords = i;
-    int initShiftBits = findLowestBit(word);
+    final int initShiftWords = i;
+    final int initShiftBits = findLowestBit(word);
     // Logically: sh = initShiftWords * 32 + initShiftBits
 
     // Temporarily devide both x and y by 2**sh.
@@ -627,54 +644,64 @@ public class MPN {
       // Shift other_arg until it is odd; this doesn't
       // affect the gcd, since we divide by 2**k, which does not
       // divide odd_arg.
-      for (i = 0; other_arg[i] == 0; ) i++;
+      for (i = 0; other_arg[i] == 0; ) {
+        i++;
+      }
       if (i > 0) {
         int j;
-        for (j = 0; j < len - i; j++)
+        for (j = 0; j < len - i; j++) {
           other_arg[j] = other_arg[j + i];
-        for (; j < len; j++)
+        }
+        for (; j < len; j++) {
           other_arg[j] = 0;
+        }
       }
       i = findLowestBit(other_arg[0]);
-      if (i > 0)
+      if (i > 0) {
         MPN.rshift(other_arg, other_arg, 0, len, i);
+      }
 
       // Now both odd_arg and other_arg are odd.
 
       // Subtract the smaller from the larger.
       // This does not change the result, since gcd(a-b,b)==gcd(a,b).
       i = MPN.cmp(odd_arg, other_arg, len);
-      if (i == 0)
+      if (i == 0) {
         break;
+      }
       if (i > 0) { // odd_arg > other_arg
         MPN.sub_n(odd_arg, odd_arg, other_arg, len);
         // Now odd_arg is even, so swap with other_arg;
-        int[] tmp = odd_arg;
+        final int[] tmp = odd_arg;
         odd_arg = other_arg;
         other_arg = tmp;
       } else { // other_arg > odd_arg
         MPN.sub_n(other_arg, other_arg, odd_arg, len);
       }
-      while (odd_arg[len - 1] == 0 && other_arg[len - 1] == 0)
+      while (odd_arg[len - 1] == 0 && other_arg[len - 1] == 0) {
         len--;
+      }
     }
     if (initShiftWords + initShiftBits > 0) {
       if (initShiftBits > 0) {
-        int sh_out = MPN.lshift(x, initShiftWords, x, len, initShiftBits);
-        if (sh_out != 0)
+        final int sh_out = MPN.lshift(x, initShiftWords, x, len, initShiftBits);
+        if (sh_out != 0) {
           x[(len++) + initShiftWords] = sh_out;
+        }
       } else {
-        for (i = len; --i >= 0; )
+        for (i = len; --i >= 0; ) {
           x[i + initShiftWords] = x[i];
+        }
       }
-      for (i = initShiftWords; --i >= 0; )
+      for (i = initShiftWords; --i >= 0; ) {
         x[i] = 0;
+      }
       len += initShiftWords;
     }
     return len;
   }
 
-  public static int intLength(int i) {
+  public static int intLength(final int i) {
     return 32 - count_leading_zeros(i < 0 ? ~i : i);
   }
 
@@ -682,7 +709,7 @@ public class MPN {
    * Calcaulte the Common Lisp "integer-length" function.
    * Assumes input is canonicalized:  len==BigInteger.wordsNeeded(words,len)
    */
-  public static int intLength(int[] words, int len) {
+  public static int intLength(final int[] words, int len) {
     len--;
     return intLength(words[len]) + 32 * len;
   }
