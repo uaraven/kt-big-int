@@ -232,16 +232,16 @@ class BigInteger : Number, Comparable<BigInteger?> {
             if (x!!.words == null && y!!.words == null) {
                 return if (x.ival < y.ival) -1 else if (x.ival > y.ival) 1 else 0
             }
-            val x_negative = x.isNegative
-            val y_negative = y!!.isNegative
-            if (x_negative != y_negative) {
-                return if (x_negative) -1 else 1
+            val xNegative = x.isNegative
+            val yNegative = y!!.isNegative
+            if (xNegative != yNegative) {
+                return if (xNegative) -1 else 1
             }
-            val x_len = if (x.words == null) 1 else x.ival
-            val y_len = if (y.words == null) 1 else y.ival
-            return if (x_len != y_len) {
-                if (x_len > y_len != x_negative) 1 else -1
-            } else MPN.cmp(x.words, y.words, x_len)
+            val xLen = if (x.words == null) 1 else x.ival
+            val yLen = if (y.words == null) 1 else y.ival
+            return if (xLen != yLen) {
+                if (xLen > yLen != xNegative) 1 else -1
+            } else MPN.cmp(x.words, y.words, xLen)
         }
 
         /**
@@ -291,9 +291,9 @@ class BigInteger : Number, Comparable<BigInteger?> {
         /**
          * Add two BigIntegers, yielding their sum as another BigInteger.
          */
-        private fun add(x: BigInteger?, y: BigInteger?, k: Int): BigInteger? {
-            var x = x
-            var y = y
+        private fun add(a: BigInteger?, b: BigInteger?, k: Int): BigInteger? {
+            var x = a
+            var y = b
             if (x!!.words == null && y!!.words == null) {
                 return valueOf(k.toLong() * y.ival.toLong() + x.ival.toLong())
             }
@@ -335,17 +335,17 @@ class BigInteger : Number, Comparable<BigInteger?> {
         }
 
         private fun times(x: BigInteger?, y: Int): BigInteger? {
-            var y = y
-            if (y == 0) {
+            var y1 = y
+            if (y1 == 0) {
                 return ZERO
             }
-            if (y == 1) {
+            if (y1 == 1) {
                 return x
             }
             var xwords = x!!.words
             val xlen = x.ival
             if (xwords == null) {
-                return valueOf(xlen.toLong() * y.toLong())
+                return valueOf(xlen.toLong() * y1.toLong())
             }
             var negative: Boolean
             val result = alloc(xlen + 1)
@@ -356,11 +356,11 @@ class BigInteger : Number, Comparable<BigInteger?> {
             } else {
                 negative = false
             }
-            if (y < 0) {
+            if (y1 < 0) {
                 negative = !negative
-                y = -y
+                y1 = -y1
             }
-            result.words!![xlen] = MPN.mul_1(result.words, xwords, xlen, y)
+            result.words!![xlen] = MPN.mul_1(result.words, xwords, xlen, y1)
             result.ival = xlen + 1
             if (negative) {
                 result.setNegative()
@@ -368,17 +368,14 @@ class BigInteger : Number, Comparable<BigInteger?> {
             return result.canonicalize()
         }
 
-        private fun times(
-            x: BigInteger?,
-            y: BigInteger?
-        ): BigInteger? {
+        private fun times(x: BigInteger?, y: BigInteger?): BigInteger? {
             if (y!!.words == null) {
                 return times(x, y.ival)
             }
             if (x!!.words == null) {
                 return times(y, x.ival)
             }
-            var negative = false
+            var negative: Boolean
             var xwords: IntArray?
             var ywords: IntArray?
             var xlen = x.ival
@@ -416,41 +413,37 @@ class BigInteger : Number, Comparable<BigInteger?> {
             return result.canonicalize()
         }
 
-        private fun divide(
-            x: Long, y: Long,
-            quotient: BigInteger?, remainder: BigInteger?,
-            rounding_mode: Int
-        ) {
-            var x = x
-            var y = y
+        private fun divide(x: Long, y: Long, quotient: BigInteger?, remainder: BigInteger?, rounding_mode: Int) {
+            var x1 = x
+            var y1 = y
             var xNegative: Boolean
             val yNegative: Boolean
-            if (x < 0) {
+            if (x1 < 0) {
                 xNegative = true
-                if (x == Long.MIN_VALUE) {
+                if (x1 == Long.MIN_VALUE) {
                     divide(
-                        valueOf(x),
-                        valueOf(y),
+                        valueOf(x1),
+                        valueOf(y1),
                         quotient,
                         remainder,
                         rounding_mode
                     )
                     return
                 }
-                x = -x
+                x1 = -x1
             } else {
                 xNegative = false
             }
-            if (y < 0) {
+            if (y1 < 0) {
                 yNegative = true
-                if (y == Long.MIN_VALUE) {
+                if (y1 == Long.MIN_VALUE) {
                     if (rounding_mode == TRUNCATE) { // x != Long.Min_VALUE implies abs(x) < abs(y)
                         quotient?.set(0)
-                        remainder?.set(x)
+                        remainder?.set(x1)
                     } else {
                         divide(
-                            valueOf(x),
-                            valueOf(y),
+                            valueOf(x1),
+                            valueOf(y1),
                             quotient,
                             remainder,
                             rounding_mode
@@ -458,12 +451,12 @@ class BigInteger : Number, Comparable<BigInteger?> {
                     }
                     return
                 }
-                y = -y
+                y1 = -y1
             } else {
                 yNegative = false
             }
-            var q = x / y
-            var r = x % y
+            var q = x1 / y1
+            var r = x1 % y1
             val qNegative = xNegative xor yNegative
             var add_one = false
             if (r != 0L) {
@@ -473,7 +466,7 @@ class BigInteger : Number, Comparable<BigInteger?> {
                     CEILING, FLOOR -> if (qNegative == (rounding_mode == FLOOR)) {
                         add_one = true
                     }
-                    ROUND -> add_one = r > y - (q and 1) shr 1
+                    ROUND -> add_one = r > y1 - (q and 1) shr 1
                 }
             }
             if (quotient != null) {
@@ -487,12 +480,10 @@ class BigInteger : Number, Comparable<BigInteger?> {
             }
             if (remainder != null) { // The remainder is by definition: X-Q*Y
                 if (add_one) { // Subtract the remainder from Y.
-                    r = y - r
-                    // In this case, abs(Q*Y) > abs(X).
-// So sign(remainder) = -sign(X).
+                    r = y1 - r
+                    // In this case, abs(Q*Y) > abs(X). So sign(remainder) = -sign(X).
                     xNegative = !xNegative
-                } else { // If !add_one, then: abs(Q*Y) <= abs(X).
-// So sign(remainder) = sign(X).
+                } else { // If !add_one, then: abs(Q*Y) <= abs(X). So sign(remainder) = sign(X).
                 }
                 if (xNegative) {
                     r = -r
@@ -512,17 +503,19 @@ class BigInteger : Number, Comparable<BigInteger?> {
          * @param rounding_mode one of FLOOR, CEILING, TRUNCATE, or ROUND.
          */
         private fun divide(
-            x: BigInteger?, y: BigInteger?,
-            quotient: BigInteger?, remainder: BigInteger?,
+            x: BigInteger?,
+            y: BigInteger?,
+            quotient: BigInteger?,
+            remainder: BigInteger?,
             rounding_mode: Int
         ) {
             if ((x!!.words == null || x.ival <= 2)
                 && (y!!.words == null || y.ival <= 2)
             ) {
-                val x_l = x.toLong()
-                val y_l = y.toLong()
-                if (x_l != Long.MIN_VALUE && y_l != Long.MIN_VALUE) {
-                    divide(x_l, y_l, quotient, remainder, rounding_mode)
+                val xL = x.toLong()
+                val yL = y.toLong()
+                if (xL != Long.MIN_VALUE && yL != Long.MIN_VALUE) {
+                    divide(xL, yL, quotient, remainder, rounding_mode)
                     return
                 }
             }
@@ -561,24 +554,24 @@ class BigInteger : Number, Comparable<BigInteger?> {
             } else if (ylen == 1) {
                 qlen = xlen
                 // Need to leave room for a word of leading zeros if dividing by 1
-// and the dividend has the high bit set.  It might be safe to
-// increment qlen in all cases, but it certainly is only necessary
-// in the following case.
+                // and the dividend has the high bit set.  It might be safe to
+                // increment qlen in all cases, but it certainly is only necessary
+                // in the following case.
                 if (ywords[0] == 1 && xwords[xlen - 1] < 0) {
                     qlen++
                 }
                 rlen = 1
                 ywords[0] = MPN.divmod_1(xwords, xwords, xlen, ywords[0])
-            } else  // abs(x) > abs(y)
-            { // Normalize the denominator, i.e. make its most significant bit set by
-// shifting it normalization_steps bits to the left.  Also shift the
-// numerator the same number of steps (to keep the quotient the same!).
+            } else { // abs(x) > abs(y)
+                // Normalize the denominator, i.e. make its most significant bit set by
+                // shifting it normalization_steps bits to the left.  Also shift the
+                // numerator the same number of steps (to keep the quotient the same!).
                 val nshift = MPN.count_leading_zeros(ywords[ylen - 1])
                 if (nshift != 0) { // Shift up the denominator setting the most significant bit of
-// the most significant word.
+                    // the most significant word.
                     MPN.lshift(ywords, 0, ywords, ylen, nshift)
                     // Shift up the numerator, possibly introducing a new most
-// significant word.
+                    // significant word.
                     val x_high = MPN.lshift(xwords, 0, xwords, xlen, nshift)
                     xwords[xlen++] = x_high
                 }
@@ -642,7 +635,7 @@ class BigInteger : Number, Comparable<BigInteger?> {
             if (remainder != null) { // The remainder is by definition: X-Q*Y
                 remainder[ywords] = rlen
                 if (add_one) { // Subtract the remainder from Y:
-// abs(R) = abs(Y) - abs(orig_rem) = -(abs(orig_rem) - abs(Y)).
+                    // abs(R) = abs(Y) - abs(orig_rem) = -(abs(orig_rem) - abs(Y)).
                     val tmp: BigInteger?
                     if (y.words == null) {
                         tmp = remainder
@@ -651,9 +644,9 @@ class BigInteger : Number, Comparable<BigInteger?> {
                         tmp = add(remainder, y, if (yNegative) 1 else -1)
                     }
                     // Now tmp <= 0.
-// In this case, abs(Q) = 1 + floor(abs(X)/abs(Y)).
-// Hence, abs(Q*Y) > abs(X).
-// So sign(remainder) = -sign(X).
+                    // In this case, abs(Q) = 1 + floor(abs(X)/abs(Y)).
+                    // Hence, abs(Q*Y) > abs(X).
+                    // So sign(remainder) = -sign(X).
                     if (xNegative) {
                         remainder.setNegative(tmp)
                     } else {
@@ -674,34 +667,29 @@ class BigInteger : Number, Comparable<BigInteger?> {
             if (b == 0) {
                 throw ArithmeticException("not invertible")
             }
-            if (b == 1) // Success:  values are indeed invertible!
-// Bottom of the recursion reached; start unwinding.
-            {
+            if (b == 1) { // Success:  values are indeed invertible!
+                // Bottom of the recursion reached; start unwinding.
                 return intArrayOf(-prevDiv, 1)
             }
-            val xy =
-                euclidInv(b, a % b, a / b) // Recursion happens here.
+            val xy = euclidInv(b, a % b, a / b) // Recursion happens here.
             a = xy[0] // use our local copy of 'a' as a work var
             xy[0] = a * -prevDiv + xy[1]
             xy[1] = a
             return xy
         }
 
-        private fun euclidInv(
-            a: BigInteger?, b: BigInteger,
-            prevDiv: BigInteger, xy: Array<BigInteger?>
-        ) {
+        private fun euclidInv(a: BigInteger?, b: BigInteger, prevDiv: BigInteger, xy: Array<BigInteger?>) {
             if (b.isZero) {
                 throw ArithmeticException("not invertible")
             }
             if (b.isOne) { // Success:  values are indeed invertible!
-// Bottom of the recursion reached; start unwinding.
+                // Bottom of the recursion reached; start unwinding.
                 xy[0] = neg(prevDiv)
                 xy[1] = ONE
                 return
             }
             // Recursion happens in the following conditional!
-// If a just contains an int, then use integer math for the rest.
+            // If a just contains an int, then use integer math for the rest.
             if (a!!.words == null) {
                 val xyInt =
                     euclidInv(b.ival, a.ival % b.ival, a.ival / b.ival)
@@ -735,24 +723,24 @@ class BigInteger : Number, Comparable<BigInteger?> {
          * Calculate Greatest Common Divisor for non-negative ints.
          */
         private fun gcd(a: Int, b: Int): Int { // Euclid's algorithm, copied from libg++.
-            var a = a
-            var b = b
+            var a1 = a
+            var b1 = b
             var tmp: Int
-            if (b > a) {
-                tmp = a
-                a = b
-                b = tmp
+            if (b1 > a1) {
+                tmp = a1
+                a1 = b1
+                b1 = tmp
             }
             while (true) {
-                if (b == 0) {
-                    return a
+                if (b1 == 0) {
+                    return a1
                 }
-                if (b == 1) {
-                    return b
+                if (b1 == 1) {
+                    return b1
                 }
-                tmp = b
-                b = a % b
-                a = tmp
+                tmp = b1
+                b1 = a1 % b1
+                a1 = tmp
             }
         }
 
@@ -791,12 +779,9 @@ class BigInteger : Number, Comparable<BigInteger?> {
             return true
         }
 
-        private fun valueOf(
-            digits: ByteArray, byte_len: Int,
-            negative: Boolean, radix: Int
-        ): BigInteger? {
-            val chars_per_word = MPN.chars_per_word(radix)
-            val words = IntArray(byte_len / chars_per_word + 1)
+        private fun valueOf(digits: ByteArray, byte_len: Int, negative: Boolean, radix: Int): BigInteger? {
+            val charsPerWord = MPN.chars_per_word(radix)
+            val words = IntArray(byte_len / charsPerWord + 1)
             var size = MPN.set_str(words, digits, byte_len, radix)
             if (size == 0) {
                 return ZERO
@@ -850,11 +835,7 @@ class BigInteger : Number, Comparable<BigInteger?> {
         /**
          * Do one the the 16 possible bit-wise operations of two BigIntegers.
          */
-        private fun bitOp(
-            op: Int,
-            x: BigInteger,
-            y: BigInteger?
-        ): BigInteger? {
+        private fun bitOp(op: Int, x: BigInteger, y: BigInteger?): BigInteger? {
             when (op) {
                 0 -> return ZERO
                 1 -> return x.and(y)
@@ -907,9 +888,9 @@ class BigInteger : Number, Comparable<BigInteger?> {
             val w = result.words
             var i = 0
             // Code for how to handle the remainder of x.
-// 0:  Truncate to length of y.
-// 1:  Copy rest of x.
-// 2:  Invert rest of x.
+            // 0:  Truncate to length of y.
+            // 1:  Copy rest of x.
+            // 2:  Invert rest of x.
             var finish = 0
             var ni: Int
             when (op) {
@@ -1080,7 +1061,7 @@ class BigInteger : Number, Comparable<BigInteger?> {
                 else -> ni = -1
             }
             // Here i==ylen-1; w[0]..w[i-1] have the correct result;
-// and ni contains the correct result for w[i+1].
+            // and ni contains the correct result for w[i+1].
             if (i + 1 == xlen) {
                 finish = 0
             }
@@ -1164,7 +1145,7 @@ class BigInteger : Number, Comparable<BigInteger?> {
         }
     }
 
-    private constructor() : super() {}
+    private constructor() : super()
     /* Create a new (non-shared) BigInteger, and initialize to an int. */
     private constructor(value: Int) : super() {
         ival = value
@@ -1198,7 +1179,7 @@ class BigInteger : Number, Comparable<BigInteger?> {
         }
         val result: BigInteger?
         // Testing (len < MPN.chars_per_word(radix)) would be more accurate,
-// but slightly more expensive, for little practical gain.
+        // but slightly more expensive, for little practical gain.
         result = if (len <= 15 && radix <= 16) {
             valueOf(s.toLong(radix))
         } else {
@@ -1208,7 +1189,7 @@ class BigInteger : Number, Comparable<BigInteger?> {
         words = result.words
     }
 
-    constructor(`val`: String) : this(`val`, 10) {}
+    constructor(`val`: String) : this(`val`, 10)
     /* Create a new (non-shared) BigInteger, and initialize from a byte array. */
     constructor(`val`: ByteArray?) : this() {
         if (`val` == null || `val`.size < 1) {
@@ -1297,7 +1278,7 @@ class BigInteger : Number, Comparable<BigInteger?> {
         words = result.words
     }
 
-    public fun getLowestSetBit(): Int {
+    fun getLowestSetBit(): Int {
         if (isZero) {
             return -1
         }
@@ -1307,7 +1288,6 @@ class BigInteger : Number, Comparable<BigInteger?> {
             MPN.findLowestBit(words)
         }
     }
-
 
     /**
      * Change words.length to nwords.
@@ -1323,17 +1303,17 @@ class BigInteger : Number, Comparable<BigInteger?> {
             }
         } else if (words == null || words!!.size < nwords || words!!.size > nwords + 2
         ) {
-            val new_words = IntArray(nwords)
+            val newWords = IntArray(nwords)
             if (words == null) {
-                new_words[0] = ival
+                newWords[0] = ival
                 ival = 1
             } else {
                 if (nwords < ival) {
                     ival = nwords
                 }
-                System.arraycopy(words, 0, new_words, 0, ival)
+                System.arraycopy(words, 0, newWords, 0, ival)
             }
-            words = new_words
+            words = newWords
         }
     }
 
@@ -1533,7 +1513,7 @@ class BigInteger : Number, Comparable<BigInteger?> {
             if (exponent1 == 0) {
                 return ONE
             }
-            throw ArithmeticException("negative exponent")
+            throw ArithmeticException("negative exponent $exponent")
         }
         if (isZero) {
             return this
@@ -1549,7 +1529,7 @@ class BigInteger : Number, Comparable<BigInteger?> {
         rwords[0] = 1 // rwords = 1;
         while (true) {
             // pow2 == this**(2**i)
-// prod = this**(sum(j=0..i-1, (exponent>>j)&1))
+            // prod = this**(sum(j=0..i-1, (exponent>>j)&1))
             if (exponent1 and 1 != 0) { // r *= pow2
                 MPN.mul(work, pow2, plen, rwords, rlen)
                 val temp = work
@@ -1617,11 +1597,11 @@ class BigInteger : Number, Comparable<BigInteger?> {
                 swapped = true
             }
             // Normally, the result is in the 2nd element of the array, but
-// if originally x < y, then x and y were swapped and the result
-// is in the 1st element of the array.
+            // if originally x < y, then x and y were swapped and the result
+            // is in the 1st element of the array.
             result!!.ival = euclidInv(yval, xval % yval, xval / yval)[if (swapped) 0 else 1]
             // Result can't be negative, so make it positive by adding the
-// original modulus, y.ival (not the possibly "swapped" yval).
+            // original modulus, y.ival (not the possibly "swapped" yval).
             if (result.ival < 0) {
                 result.ival += y.ival
             }
@@ -1635,7 +1615,7 @@ class BigInteger : Number, Comparable<BigInteger?> {
                 swapped = true
             }
             // As above (for ints), result will be in the 2nd element unless
-// the original x and y were swapped.
+            // the original x and y were swapped.
             val rem = BigInteger()
             val quot = BigInteger()
             divide(x, y, quot, rem, FLOOR)
@@ -1646,7 +1626,7 @@ class BigInteger : Number, Comparable<BigInteger?> {
             euclidInv(y, rem, quot, xy)
             result = if (swapped) xy[0] else xy[1]
             // Result can't be negative, so make it positive by adding the
-// original modulus, y (which is now x if they were swapped).
+            // original modulus, y (which is now x if they were swapped).
             if (result!!.isNegative) {
                 result = add(result, if (swapped) x else y, 1)
             }
@@ -1654,10 +1634,7 @@ class BigInteger : Number, Comparable<BigInteger?> {
         return result
     }
 
-    fun modPow(
-        exponent: BigInteger?,
-        m: BigInteger
-    ): BigInteger? {
+    fun modPow(exponent: BigInteger?, m: BigInteger): BigInteger? {
         if (m.isNegative || m.isZero) {
             throw ArithmeticException("non-positive modulo")
         }
@@ -1838,36 +1815,36 @@ class BigInteger : Number, Comparable<BigInteger?> {
         val xlen: Int
         if (x.words == null) {
             if (count < 32) {
-                set(x.ival.toLong() shl count);
-                return;
+                set(x.ival.toLong() shl count)
+                return
             }
-            xwords = IntArray(1);
-            xwords[0] = x.ival;
-            xlen = 1;
+            xwords = IntArray(1)
+            xwords[0] = x.ival
+            xlen = 1
         } else {
-            xwords = x.words;
-            xlen = x.ival;
+            xwords = x.words
+            xlen = x.ival
         }
         val word_count: Int = count shr 5
-        count = count and 31;
-        var new_len: Int = xlen + word_count;
+        count = count and 31
+        var new_len: Int = xlen + word_count
         if (count == 0) {
-            realloc(new_len);
+            realloc(new_len)
             var i = xlen
             while (--i >= 0) {
                 words!![i + word_count] = xwords!![i]
             }
         } else {
-            new_len++;
-            realloc(new_len);
-            val shift_out: Int = MPN.lshift(words, word_count, xwords, xlen, count);
-            count = 32 - count;
+            new_len++
+            realloc(new_len)
+            val shift_out: Int = MPN.lshift(words, word_count, xwords, xlen, count)
+            count = 32 - count
             words!![new_len - 1] = (shift_out shl count) shr count  // sign-extend.
         }
-        ival = new_len;
+        ival = new_len
         var i = word_count
         while (--i >= 0) {
-            words!![i] = 0;
+            words!![i] = 0
         }
     }
 
@@ -1909,13 +1886,17 @@ class BigInteger : Number, Comparable<BigInteger?> {
     fun shiftLeft(n: Int): BigInteger? {
         return if (n == 0) {
             this
-        } else shift(this, n)
+        } else {
+            shift(this, n)
+        }
     }
 
     fun shiftRight(n: Int): BigInteger? {
         return if (n == 0) {
             this
-        } else shift(this, -n)
+        } else {
+            shift(this, -n)
+        }
     }
 
     private fun format(radix: Int, buffer: StringBuilder) {
@@ -1998,7 +1979,9 @@ class BigInteger : Number, Comparable<BigInteger?> {
     override fun toInt(): Int {
         return if (words == null) {
             ival
-        } else words!![0]
+        } else {
+            words!![0]
+        }
     }
 
     override fun toLong(): Long {
@@ -2300,28 +2283,28 @@ class BigInteger : Number, Comparable<BigInteger?> {
         if (n < 0) {
             throw ArithmeticException()
         }
-        return and(ONE!!.shiftLeft(n)!!.not())
+        return and(ONE.shiftLeft(n)!!.not())
     }
 
     fun setBit(n: Int): BigInteger? {
         if (n < 0) {
             throw ArithmeticException()
         }
-        return or(ONE!!.shiftLeft(n))
+        return or(ONE.shiftLeft(n))
     }
 
     fun testBit(n: Int): Boolean {
         if (n < 0) {
             throw ArithmeticException()
         }
-        return !and(ONE!!.shiftLeft(n))!!.isZero
+        return !and(ONE.shiftLeft(n))!!.isZero
     }
 
     fun flipBit(n: Int): BigInteger? {
         if (n < 0) {
             throw ArithmeticException()
         }
-        return xor(ONE!!.shiftLeft(n))
+        return xor(ONE.shiftLeft(n))
     }
 
     /**

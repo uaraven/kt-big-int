@@ -35,7 +35,10 @@
 package net.ninjacat.math;
 
 import kotlin.random.Random;
+import org.hamcrest.Matchers;
 import org.junit.Test;
+
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * This is a simple test class created to ensure that the results
@@ -917,18 +920,32 @@ public class BigIntegerTest {
                 m = fetchNumber(order1).abs();
             }
             final BigInteger base = fetchNumber(order2);
-            final BigInteger exp = fetchNumber(8).abs();
+            BigInteger exp = fetchNumber(8).abs();
+            while (exp.intValue() < 0) {
+                exp = fetchNumber(8).abs();
+            }
 
             final BigInteger z = base.modPow(exp, m);
-            final BigInteger w = base.pow(exp.intValue()).mod(m);
-            if (!z.equals(w)) {
+            try {
+                final BigInteger w = base.pow(exp.intValue()).mod(m);
+                if (!z.equals(w)) {
+                    System.err.println("z is " + z);
+                    System.err.println("w is " + w);
+                    System.err.println("mod is " + m);
+                    System.err.println("base is " + base);
+                    System.err.println("exp is " + exp);
+                    failCount++;
+                }
+            } catch (Exception ex) {
                 System.err.println("z is " + z);
-                System.err.println("w is " + w);
+                System.err.println("w is undefined");
                 System.err.println("mod is " + m);
                 System.err.println("base is " + base);
-                System.err.println("exp is " + exp);
+                System.err.println("exp is " + exp + "    " + exp.intValue());
                 failCount++;
+                ex.printStackTrace();
             }
+
         }
         report("Exponentiation I for " + order1 + " and " +
                 order2 + " bits", failCount);
@@ -1293,8 +1310,8 @@ public class BigIntegerTest {
         modInv(order3);   // Karatsuba range
         modInv(order4);   // Toom-Cook / Burnikel-Ziegler range
 
-//        modExp(order1, order2);
-//        modExp2(order1);
+        modExp(order1, order2);
+        modExp2(order1);
 
         stringConv();
 
@@ -1379,6 +1396,14 @@ public class BigIntegerTest {
         }
 
         return result;
+    }
+
+    @Test
+    public void testToInt() {
+        final BigInteger i = new BigInteger("4294967263");
+
+        final java.math.BigInteger ji = new java.math.BigInteger("4294967263");
+        assertThat(i.intValue(), Matchers.is(i.toInt()));
     }
 
     static void report(final String testName, final int failCount) {

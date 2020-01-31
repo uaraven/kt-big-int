@@ -2380,28 +2380,4 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
         return isNegative() ? x_len * 32 - i : i;
     }
 
-//    private void readObject(final ObjectInputStream s)
-//            throws IOException, ClassNotFoundException {
-//        s.defaultReadObject();
-//        if (magnitude.length == 0 || signum == 0) {
-//            this.ival = 0;
-//            this.words = null;
-//        } else {
-//            words = byteArrayToIntArray(magnitude, signum < 0 ? -1 : 0);
-//            final BigInteger result = make(words, words.length);
-//            this.ival = result.ival;
-//            this.words = result.words;
-//        }
-//    }
-//
-//    private void writeObject(final ObjectOutputStream s)
-//            throws IOException, ClassNotFoundException {
-//        signum = signum();
-//        magnitude = signum == 0 ? new byte[0] : toByteArray();
-//        s.defaultWriteObject();
-//        magnitude = null; // not needed anymore
-//    }
-
-    // inner class(es) ..........................................................
-
 }
