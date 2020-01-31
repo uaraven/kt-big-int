@@ -200,7 +200,7 @@ class BigInteger : Number, Comparable<BigInteger?> {
             var word = sign
             var i = bytes.size % 4
             while (i > 0) {
-                word = word shl 8 or (bytes[bptr] and 0xff.toByte()).toInt()
+                word = (word shl 8) or (bytes[bptr].toInt() and 0xff)
                 --i
                 bptr++
             }
@@ -208,9 +208,9 @@ class BigInteger : Number, Comparable<BigInteger?> {
             // Elements remaining in byte[] are a multiple of 4.
             while (nwords > 0) {
                 words[--nwords] = bytes[bptr++].toInt() shl 24 or
-                        ((bytes[bptr++] and 0xff.toByte()).toInt() shl 16) or
-                        ((bytes[bptr++] and 0xff.toByte()).toInt() shl 8) or
-                        (bytes[bptr++] and 0xff.toByte()).toInt()
+                        ((bytes[bptr++].toInt() and 0xff) shl 16) or
+                        ((bytes[bptr++].toInt() and 0xff) shl 8) or
+                        (bytes[bptr++].toInt() and 0xff)
             }
             return words
         }
@@ -291,11 +291,7 @@ class BigInteger : Number, Comparable<BigInteger?> {
         /**
          * Add two BigIntegers, yielding their sum as another BigInteger.
          */
-        private fun add(
-            x: BigInteger?,
-            y: BigInteger?,
-            k: Int
-        ): BigInteger? {
+        private fun add(x: BigInteger?, y: BigInteger?, k: Int): BigInteger? {
             var x = x
             var y = y
             if (x!!.words == null && y!!.words == null) {
@@ -305,10 +301,7 @@ class BigInteger : Number, Comparable<BigInteger?> {
                 y = if (k == -1) {
                     neg(y)
                 } else {
-                    times(
-                        y,
-                        valueOf(k.toLong())
-                    )
+                    times(y, valueOf(k.toLong()))
                 }
             }
             if (x.words == null) {
@@ -2211,7 +2204,9 @@ class BigInteger : Number, Comparable<BigInteger?> {
     fun bitLength(): Int {
         return if (words == null) {
             MPN.intLength(ival)
-        } else MPN.intLength(words, ival)
+        } else {
+            MPN.intLength(words, ival)
+        }
     }
 
     fun toByteArray(): ByteArray {
@@ -2219,14 +2214,14 @@ class BigInteger : Number, Comparable<BigInteger?> {
             return ByteArray(1)
         }
         // Determine number of bytes needed.  The method bitlength returns
-// the size without the sign bit, so add one bit for that and then
-// add 7 more to emulate the ceil function using integer math.
+        // the size without the sign bit, so add one bit for that and then
+        // add 7 more to emulate the ceil function using integer math.
         val bytes = ByteArray((bitLength() + 1 + 7) / 8)
         var nbytes = bytes.size
         var wptr = 0
         var word: Int
         // Deal with words array until one word or less is left to process.
-// If BigInteger is an int, then it is in ival and nbytes will be <= 4.
+        // If BigInteger is an int, then it is in ival and nbytes will be <= 4.
         while (nbytes > 4) {
             word = words!![wptr++]
             var i = 4

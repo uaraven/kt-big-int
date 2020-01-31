@@ -1257,6 +1257,7 @@ public class BigIntegerTest {
         constructor();
 
         prime();
+        // unsupported by Classpath BigInteger
 //        nextProbablePrime();
 
         arithmetic(order1);   // small numbers
@@ -1275,6 +1276,7 @@ public class BigIntegerTest {
         square(ORDER_KARATSUBA_SQUARE);
         square(ORDER_TOOM_COOK_SQUARE);
 
+        // unsupported by Classpath BigInteger
 //        squareRoot();
 //        squareRootAndRemainder();
 
@@ -1285,7 +1287,7 @@ public class BigIntegerTest {
 
         shift(order1);
 
-//        byteArrayConv(order1);
+        byteArrayConv(order1);
 
         modInv(order1);   // small numbers
         modInv(order3);   // Karatsuba range
