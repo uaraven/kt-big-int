@@ -13,7 +13,7 @@ Classpath extension. Please see [LICENSE](LICENSE) and [COPYING](COPYING) files 
 
 **Limitations**
 
-GNU Classpath BigInteger implementation matches Java 1.2 spec, so nothing newer is supported, for example
+GNU Classpath BigInteger implementation matches Java 1.2 spec, so in general nothing newer is supported, for example
 `BigInteger.longValueExact()` and `BigInteger.sqrt()`.
 
 Support for Java 1.5 is inconsistent, for example `BigInteger.TEN` is supported, but `BigInteger.nextProbablePrime()` is not. 

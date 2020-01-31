@@ -58,7 +58,7 @@ import kotlin.random.Random
  *
  * @author Oleksiy Voronin (me@ovoronin.info)
  * @date January 30, 2020
- * @status Passes Jdk 14 unit tests (some of them
+ * @status Passes Jdk 14 unit tests (most of them at least)
  */
 class BigInteger : Number, Comparable<BigInteger?> {
     /**
@@ -94,6 +94,7 @@ class BigInteger : Number, Comparable<BigInteger?> {
          *
          * @since 1.2
          */
+
         lateinit var ZERO: BigInteger
         /**
          * The constant one as a BigInteger.
@@ -241,7 +242,7 @@ class BigInteger : Number, Comparable<BigInteger?> {
             val yLen = if (y.words == null) 1 else y.ival
             return if (xLen != yLen) {
                 if (xLen > yLen != xNegative) 1 else -1
-            } else MPN.cmp(x.words, y.words, xLen)
+            } else MPN.cmp(x.words!!, y.words!!, xLen)
         }
 
         /**
@@ -318,7 +319,7 @@ class BigInteger : Number, Comparable<BigInteger?> {
             }
             val result = alloc(x.ival + 1)
             var i = y.ival
-            var carry = MPN.add_n(result.words, x.words, y.words, i).toLong()
+            var carry = MPN.add_n(result.words!!, x.words!!, y.words!!, i).toLong()
             var y_ext = if (y.words!![i - 1] < 0) 0xffffffffL else 0
             while (i < x.ival) {
                 carry += (x.words!![i].toLong() and 0xffffffffL) + y_ext
@@ -360,7 +361,7 @@ class BigInteger : Number, Comparable<BigInteger?> {
                 negative = !negative
                 y1 = -y1
             }
-            result.words!![xlen] = MPN.mul_1(result.words, xwords, xlen, y1)
+            result.words!![xlen] = MPN.mul_1(result.words!!, xwords!!, xlen, y1)
             result.ival = xlen + 1
             if (negative) {
                 result.setNegative()
@@ -405,7 +406,7 @@ class BigInteger : Number, Comparable<BigInteger?> {
                 ylen = tlen
             }
             val result = alloc(xlen + ylen)
-            MPN.mul(result.words, xwords, xlen, ywords, ylen)
+            MPN.mul(result.words!!, xwords!!, xlen, ywords!!, ylen)
             result.ival = xlen + ylen
             if (negative) {
                 result.setNegative()
@@ -1206,8 +1207,7 @@ class BigInteger : Number, Comparable<BigInteger?> {
             throw NumberFormatException()
         }
         if (signum == 0) {
-            var i: Int
-            i = magnitude.size - 1
+            var i: Int = magnitude.size - 1
             while (i >= 0 && magnitude[i].toInt() == 0) {
                 --i
             }
@@ -1285,7 +1285,7 @@ class BigInteger : Number, Comparable<BigInteger?> {
         return if (words == null) {
             MPN.findLowestBit(ival)
         } else {
-            MPN.findLowestBit(words)
+            MPN.findLowestBit(words!!)
         }
     }
 
@@ -1837,7 +1837,7 @@ class BigInteger : Number, Comparable<BigInteger?> {
         } else {
             new_len++
             realloc(new_len)
-            val shift_out: Int = MPN.lshift(words, word_count, xwords, xlen, count)
+            val shift_out: Int = MPN.lshift(words!!, word_count, xwords!!, xlen, count)
             count = 32 - count
             words!![new_len - 1] = (shift_out shl count) shr count  // sign-extend.
         }
@@ -1866,7 +1866,7 @@ class BigInteger : Number, Comparable<BigInteger?> {
                 if (words == null || words!!.size < d_len) {
                     realloc(d_len)
                 }
-                MPN.rshift0(words, x.words, word_count, d_len, count)
+                MPN.rshift0(words!!, x.words!!, word_count, d_len, count)
                 ival = d_len
                 if (neg) {
                     words!![d_len - 1] = words!![d_len - 1] or (-2 shl (31 - count))
@@ -2083,7 +2083,7 @@ class BigInteger : Number, Comparable<BigInteger?> {
         var m: Long
         val excess_bits = il - (ml + 1)
         m = if (excess_bits > 0) {
-            if (words == null) (ival shr excess_bits).toLong() else MPN.rshift_long(words, ival, excess_bits)
+            if (words == null) (ival shr excess_bits).toLong() else MPN.rshift_long(words!!, ival, excess_bits)
         } else {
             toLong() shl -excess_bits
         }
@@ -2188,7 +2188,7 @@ class BigInteger : Number, Comparable<BigInteger?> {
         return if (words == null) {
             MPN.intLength(ival)
         } else {
-            MPN.intLength(words, ival)
+            MPN.intLength(words!!, ival)
         }
     }
 
