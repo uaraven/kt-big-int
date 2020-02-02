@@ -13,7 +13,7 @@ Classpath extension. Please see [LICENSE](LICENSE) and [COPYING](COPYING) files 
 
 **Limitations**
 
-GNU Classpath BigInteger implementation matches Java 1.2 spec, so nothing newer is supported, for example
+GNU Classpath BigInteger implementation matches Java 1.2 spec, so in general nothing newer is supported, for example
 `BigInteger.longValueExact()` and `BigInteger.sqrt()`.
 
 Support for Java 1.5 is inconsistent, for example `BigInteger.TEN` is supported, but `BigInteger.nextProbablePrime()` is not. 
@@ -30,3 +30,15 @@ Support for Java 1.5 is inconsistent, for example `BigInteger.TEN` is supported,
     
 String conversions are extremely slow, but work.
      
+     
+**Lessons learnt**
+
+IDEA's Java-to-Kotlin translator does good job but it screws up bitwise operations, probably because in Kotlin
+they are implemented as extension methods with infix notation. 
+
+    a = b | c + d   // in Java
+    a = b | (c + d) // how it is evaluated in Java
+    a = b or c + d  // in Kotlin
+    a = b.or(c) + d // and how it is evaluated in Kotlin 
+
+Best solution is to replace all infix operators with method calls.
