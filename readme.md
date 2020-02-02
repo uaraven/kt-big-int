@@ -41,4 +41,4 @@ they are implemented as extension methods with infix notation.
     a = b or c + d  // in Kotlin
     a = b.or(c) + d // and how it is evaluated in Kotlin 
 
-Best solution is to replace all infix operators with method calls.
+Best solution is to replace all infix operators with explicit method calls.
