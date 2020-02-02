@@ -101,10 +101,10 @@ object MPN {
             val x = X[i]
             y += cy /* add previous carry to subtrahend */
             // Invert the high-order bit, because: (unsigned) X > (unsigned) Y
-// iff: (int) (X^0x80000000) > (int) (Y^0x80000000).
-            cy = if (y xor -0x80000000 < cy xor -0x80000000) 1 else 0
+            // iff: (int) (X^0x80000000) > (int) (Y^0x80000000).
+            cy = if ((y xor -0x80000000) < (cy xor -0x80000000)) 1 else 0
             y = x - y
-            cy += if (y xor -0x80000000 > x xor -0x80000000) 1 else 0
+            cy += if ((y xor -0x80000000) > (x xor -0x80000000)) 1 else 0
             dest[i] = y
         }
         return cy
@@ -166,7 +166,7 @@ object MPN {
         val a1 = N ushr 32
         val a0 = N and 0xffffffffL
         if (D >= 0) {
-            if (a1 < (D - a1 - (a0 ushr 31)) and 0xffffffffL) {
+            if (a1 < ((D - a1 - (a0 ushr 31)) and 0xffffffffL)) {
                 /* dividend, divisor, and quotient are nonnegative */
                 q = N / D
                 r = N % D
@@ -229,7 +229,7 @@ object MPN {
     fun divmod_1(quotient: IntArray, dividend: IntArray, len: Int, divisor: Int): Int {
         var i = len - 1
         var r = dividend[i].toLong()
-        if (r and 0xffffffffL >= divisor.toLong() and 0xffffffffL) {
+        if ((r and 0xffffffffL) >= (divisor.toLong() and 0xffffffffL)) {
             r = 0
         } else {
             quotient[i--] = 0
@@ -261,10 +261,10 @@ object MPN {
             prod_low += carry
             // Invert the high-order bit, because: (unsigned) X > (unsigned) Y
             // iff: (int) (X^0x80000000) > (int) (Y^0x80000000).
-            carry = ((if (prod_low xor -0x80000000 < carry xor -0x80000000) 1 else 0) + prod_high)
+            carry = ((if ((prod_low xor -0x80000000) < (carry xor -0x80000000)) 1 else 0) + prod_high)
             val xJ = dest[offset + j]
             prod_low = xJ - prod_low
-            if (prod_low xor -0x80000000 > xJ xor -0x80000000) {
+            if ((prod_low xor -0x80000000) > (xJ xor -0x80000000)) {
                 carry++
             }
             dest[offset + j] = prod_low
@@ -386,7 +386,7 @@ object MPN {
 
     fun set_str(dest: IntArray, str: ByteArray, str_len: Int, base: Int): Int {
         var size = 0
-        if (base and (base - 1) == 0) {
+        if ((base and (base - 1)) == 0) {
             // The base is a power of 2.  Read the input string from
             // least to most significant character/digit.  */
             var next_bitpos = 0
@@ -401,12 +401,13 @@ object MPN {
             var i = str_len
             while (--i >= 0) {
                 val inp_digit = str[i].toInt()
-                res_digit = (res_digit or inp_digit) shl next_bitpos
+//                res_digit = (res_digit or inp_digit) shl next_bitpos
+                res_digit = res_digit or (inp_digit shl next_bitpos)
                 next_bitpos += bits_per_indigit
                 if (next_bitpos >= 32) {
                     dest[size++] = res_digit
                     next_bitpos -= 32
-                    res_digit = inp_digit shr bits_per_indigit - next_bitpos
+                    res_digit = inp_digit shr (bits_per_indigit - next_bitpos)
                 }
             }
             if (res_digit != 0) {
@@ -456,7 +457,7 @@ object MPN {
                 // Invert the high-order bit, because:
                 // (unsigned) X > (unsigned) Y iff
                 // (int) (X^0x80000000) > (int) (Y^0x80000000).
-                return if (x_word xor -0x80000000 > y_word xor -0x80000000) 1 else -1
+                return if ((x_word xor -0x80000000) > (y_word xor -0x80000000)) 1 else -1
             }
         }
         return 0
@@ -534,8 +535,8 @@ object MPN {
         if (count1 != 0) {
             wordno++
             val w2 = if (wordno >= len) sign else x[wordno]
-            w0 = (w0 ushr count1) or (w1 shl 32 - count1)
-            w1 = (w1 ushr count1) or (w2 shl 32 - count1)
+            w0 = w0.ushr(count1) or w1.shl(32 - count1)
+            w1 = w1.ushr(count1) or w2.shl(32 - count1)
         }
         return (w1.toLong() shl 32) or (w0.toLong() and 0xffffffffL)
     }
@@ -551,14 +552,14 @@ object MPN {
         val count2 = 32 - count
         var i = len - 1
         var highWord = x[i]
-        val retVal = highWord ushr count2
+        val retVal = highWord.ushr(count2)
         dOffset++
         while (--i >= 0) {
             val lowWord = x[i]
-            dest[dOffset + i] = (highWord shl count) or (lowWord ushr count2)
+            dest[dOffset + i] = highWord.shl(count) or lowWord.ushr(count2)
             highWord = lowWord
         }
-        dest[dOffset + i] = highWord shl count
+        dest[dOffset + i] = highWord.shl(count)
         return retVal
     }
 
@@ -617,13 +618,13 @@ object MPN {
         val initShiftWords = i
         val initShiftBits = findLowestBit(word)
         // Logically: sh = initShiftWords * 32 + initShiftBits
-// Temporarily devide both x and y by 2**sh.
+        // Temporarily devide both x and y by 2**sh.
         len1 -= initShiftWords
         rshift0(x, x, initShiftWords, len1, initShiftBits)
         rshift0(y, y, initShiftWords, len1, initShiftBits)
         var odd_arg: IntArray /* One of x or y which is odd. */
         var other_arg: IntArray /* The other one can be even or odd. */
-        if (x[0] and 1 != 0) {
+        if (x[0].and(1) != 0) {
             odd_arg = x
             other_arg = y
         } else {
@@ -632,15 +633,14 @@ object MPN {
         }
         while (true) {
             // Shift other_arg until it is odd; this doesn't
-// affect the gcd, since we divide by 2**k, which does not
-// divide odd_arg.
+            // affect the gcd, since we divide by 2**k, which does not
+            // divide odd_arg.
             i = 0
             while (other_arg[i] == 0) {
                 i++
             }
             if (i > 0) {
-                var j: Int
-                j = 0
+                var j: Int = 0
                 while (j < len1 - i) {
                     other_arg[j] = other_arg[j + i]
                     j++
@@ -655,8 +655,9 @@ object MPN {
                 rshift(other_arg, other_arg, 0, len1, i)
             }
             // Now both odd_arg and other_arg are odd.
-// Subtract the smaller from the larger.
-// This does not change the result, since gcd(a-b,b)==gcd(a,b).
+
+            // Subtract the smaller from the larger.
+            // This does not change the result, since gcd(a-b,b)==gcd(a,b).
             i = cmp(odd_arg, other_arg, len1)
             if (i == 0) {
                 break

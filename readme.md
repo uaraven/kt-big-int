@@ -30,3 +30,15 @@ Support for Java 1.5 is inconsistent, for example `BigInteger.TEN` is supported,
     
 String conversions are extremely slow, but work.
      
+     
+**Lessons learnt**
+
+IDEA's Java-to-Kotlin translator does good job but it screws up bitwise operations, probably because in Kotlin
+they are implemented as extension methods with infix notation. 
+
+    a = b | c + d   // in Java
+    a = b | (c + d) // how it is evaluated in Java
+    a = b or c + d  // in Kotlin
+    a = b.or(c) + d // and how it is evaluated in Kotlin 
+
+Best solution is to replace all infix operators with method calls.
